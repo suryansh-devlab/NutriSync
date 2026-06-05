@@ -1,10 +1,11 @@
 import express from "express";
 import "./config/redis.js";
+import authRoutes from "./routes/auth.routes.js";
 
 const app = express();
 
-app.get("/", (req, res) => {
-  res.json({ status: "success", message: "NutriSync API is Live 🚀" });
-});
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+app.use("/api/auth", authRoutes);
 export default app;
