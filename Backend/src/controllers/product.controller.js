@@ -18,7 +18,7 @@ export const createProduct = asyncHandler(async (req, res) => {
 });
 
 export const getAllProducts = asyncHandler(async (req, res) => {
-  const products = await getAllProductsService();
+  const products = await getAllProductsService(req.query);
 
   return res
     .status(200)
