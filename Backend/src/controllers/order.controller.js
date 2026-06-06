@@ -11,7 +11,12 @@ import {
 
 // Place Order
 export const placeOrder = asyncHandler(async (req, res) => {
-  const order = await placeOrderService(req.user.userId);
+  const { addressId, paymentMethod } = req.body;
+  const order = await placeOrderService(
+    req.user.userId,
+    addressId,
+    paymentMethod,
+  );
 
   return res
     .status(201)

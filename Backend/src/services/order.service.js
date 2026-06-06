@@ -1,10 +1,11 @@
 import { Order } from "../models/order.model.js";
 import { Cart } from "../models/cart.model.js";
 import { Product } from "../models/product.model.js";
+import { Address } from "../models/address.model.js";
 import ApiError from "../utils/ApiError.js";
 
 // Place Order
-export const placeOrderService = async (userId) => {
+export const placeOrderService = async (userId, addressId, paymentMethod) => {
   // Find user's cart
   const cart = await Cart.findOne({
     user: userId,
@@ -12,6 +13,16 @@ export const placeOrderService = async (userId) => {
 
   if (!cart || cart.items.length === 0) {
     throw new ApiError(400, "Cart is empty");
+  }
+
+  // Find address
+  const address = await Address.findOne({
+    _id: addressId,
+    user: userId,
+  });
+
+  if (!address) {
+    throw new ApiError(404, "Address not found");
   }
 
   // Validate stock
@@ -35,6 +46,31 @@ export const placeOrderService = async (userId) => {
     user: userId,
     items: orderItems,
     totalPrice: cart.totalPrice,
+    paymentMethod: paymentMethod || "cod",
+
+    shippingAddress: {
+      addressId: address._id,
+
+      fullName: address.fullName,
+
+      phone: address.phone,
+
+      addressLine1: address.addressLine1,
+
+      addressLine2: address.addressLine2,
+
+      city: address.city,
+
+      state: address.state,
+
+      postalCode: address.postalCode,
+
+      country: address.country,
+
+      landmark: address.landmark,
+
+      tag: address.tag,
+    },
   });
 
   // Reduce stock
