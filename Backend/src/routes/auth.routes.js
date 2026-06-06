@@ -16,6 +16,7 @@ import {
   getProfile,
   updateProfile,
 } from "../controllers/auth.controller.js";
+import authorizeRoles from "../middleware/role.middleware.js";
 
 const router = express.Router();
 
@@ -26,6 +27,12 @@ router.post("/resend-otp", resendOTP);
 
 // 🏪 Business
 router.post("/register", registerRetailerController);
+router.post(
+  "/create-staff",
+  verifyAccessToken,
+  authorizeRoles("admin"),
+  createStaffController,
+);
 router.get("/verify-email/:token", VerifyEmailController);
 router.patch(
   "/approve-retailer/:id",
@@ -37,7 +44,6 @@ router.post("/forgot-password", forgotPasswordController);
 router.post("/reset-password/:token", resetPasswordController);
 
 // Protected
-router.post("/staff", verifyAccessToken, createStaffController);
 router.post("/logout", verifyAccessToken, logout);
 router.get("/profile", verifyAccessToken, getProfile);
 router.patch("/profile-update", verifyAccessToken, updateProfile);

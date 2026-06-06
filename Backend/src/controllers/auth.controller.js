@@ -110,6 +110,7 @@ export const registerRetailerController = asyncHandler(async (req, res) => {
 
 export const createStaffController = asyncHandler(async (req, res) => {
   const adminId = req.user?.userId;
+
   const { email, password, name } = req.body;
 
   if (!adminId) {
@@ -127,12 +128,16 @@ export const createStaffController = asyncHandler(async (req, res) => {
   });
 
   return res.status(201).json(
-    new ApiResponse(201, "Staff created successfully", {
-      _id: staff._id,
-      email: staff.email,
-      name: staff.name,
-      role: staff.role,
-    }),
+    new ApiResponse(
+      201,
+      {
+        _id: staff._id,
+        email: staff.email,
+        name: staff.name,
+        role: staff.role,
+      },
+      "Staff created successfully",
+    ),
   );
 });
 
