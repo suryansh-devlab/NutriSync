@@ -2,13 +2,13 @@ import asyncHandler from "../utils/AsyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  generateVerificationToken,
-} from "../utils/jwt.js";
+
+import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+
 import { sendWelcomeEmail } from "../utils/mail.js";
+
 import jwt from "jsonwebtoken";
+
 import {
   sendOTPService,
   verifyOTPService,
@@ -23,10 +23,12 @@ import {
   resetPassword,
   getProfileService,
 } from "../services/auth.service.js";
+
 import { getCookieOptions } from "../utils/cookieOptions.js";
 
 /* ================= OTP ================= */
 
+// 📱 Send OTP
 export const sendOTP = asyncHandler(async (req, res) => {
   const { phone } = req.body;
 
@@ -40,7 +42,9 @@ export const sendOTP = asyncHandler(async (req, res) => {
 
   await sendOTPService(phone);
 
-  return res.status(200).json(new ApiResponse(200, "OTP sent successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "OTP sent successfully"));
 });
 
 // ✅ Verify OTP + Login/Register
@@ -68,11 +72,15 @@ export const verifyOTP = asyncHandler(async (req, res) => {
   res.cookie("refreshToken", data.refreshToken, getCookieOptions());
 
   return res.status(200).json(
-    new ApiResponse(200, "Login successful", {
-      user: data.user,
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken,
-    }),
+    new ApiResponse(
+      200,
+      {
+        user: data.user,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+      },
+      "Login successful",
+    ),
   );
 });
 
@@ -90,24 +98,30 @@ export const resendOTP = asyncHandler(async (req, res) => {
 
   await resendOTPService(phone);
 
-  return res.status(200).json(new ApiResponse(200, "OTP resent successfully"));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "OTP resent successfully"));
 });
 
-//  🏪 BUSINESS AUTH (Retailer / Admin / Staff)
+/* ================= BUSINESS AUTH ================= */
 
 // 🏪 Register Retailer
 export const registerRetailerController = asyncHandler(async (req, res) => {
   const user = await registerRetailer(req.body);
-  // console.log("Registered retailer:", user);
 
   return res.status(201).json(
-    new ApiResponse(201, "Verification email sent", {
-      email: user.email,
-      userId: user._id,
-    }),
+    new ApiResponse(
+      201,
+      {
+        email: user.email,
+        userId: user._id,
+      },
+      "Verification email sent",
+    ),
   );
 });
 
+// 👨‍💼 Create Staff
 export const createStaffController = asyncHandler(async (req, res) => {
   const adminId = req.user?.userId;
 
@@ -152,21 +166,28 @@ export const VerifyEmailController = asyncHandler(async (req, res) => {
   const user = await verifyEmail(token);
 
   const accessToken = generateAccessToken(user);
+
   const refreshToken = generateRefreshToken(user);
 
   const shopUrl = process.env.CLIENT_URL;
+
   await sendWelcomeEmail(user.email, user.name, shopUrl);
 
   return res.status(200).json(
-    new ApiResponse(200, "Email verified successfully", {
-      email: user.email,
-      UserId: user._id,
-      accessToken,
-      refreshToken,
-    }),
+    new ApiResponse(
+      200,
+      {
+        email: user.email,
+        UserId: user._id,
+        accessToken,
+        refreshToken,
+      },
+      "Email verified successfully",
+    ),
   );
 });
 
+// ✅ Approve Retailer
 export const approveRetailerController = asyncHandler(async (req, res) => {
   const retailer = await approvedRetailerService(
     req.user.userId,
@@ -177,7 +198,8 @@ export const approveRetailerController = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, retailer, "Retailer approved successfully"));
 });
-// 🔐 Login
+
+// 🔐 Business Login
 export const loginBusinessUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -190,10 +212,14 @@ export const loginBusinessUser = asyncHandler(async (req, res) => {
   res.cookie("refreshToken", data.refreshToken, getCookieOptions());
 
   return res.status(200).json(
-    new ApiResponse(200, "Login successful", {
-      user: data.user,
-      accessToken: data.accessToken,
-    }),
+    new ApiResponse(
+      200,
+      {
+        user: data.user,
+        accessToken: data.accessToken,
+      },
+      "Login successful",
+    ),
   );
 });
 
@@ -201,16 +227,19 @@ export const loginBusinessUser = asyncHandler(async (req, res) => {
 export const forgotPasswordController = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
-  if (!email) throw new ApiError(400, "Email required");
+  if (!email) {
+    throw new ApiError(400, "Email required");
+  }
 
   const data = await forgotPassword(email);
 
-  return res.status(200).json(new ApiResponse(200, data.message));
+  return res.status(200).json(new ApiResponse(200, null, data.message));
 });
 
 // 🔄 Reset Password
 export const resetPasswordController = asyncHandler(async (req, res) => {
   const { token } = req.params;
+
   const { password } = req.body;
 
   if (!token || !password) {
@@ -219,45 +248,66 @@ export const resetPasswordController = asyncHandler(async (req, res) => {
 
   const data = await resetPassword(token, password);
 
-  return res.status(200).json(new ApiResponse(200, data.message));
+  return res.status(200).json(new ApiResponse(200, null, data.message));
 });
 
-// 🔁 COMMON (Consumer + Business)
+/* ================= COMMON ================= */
 
 // 📄 Get Profile
 export const getProfile = asyncHandler(async (req, res) => {
   const userId = req.user?.userId;
-  console.log("Fetching profile for userId:", userId);
+
   if (!userId) {
     throw new ApiError(401, "Unauthorized");
   }
-  const user = await getProfileService(userId);
 
-  // console.log(user);
+  const user = await getProfileService(userId);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Profile fetched successfully", user));
+    .json(new ApiResponse(200, user, "Profile fetched successfully"));
 });
 
 // ✏️ Update Profile
 export const updateProfile = asyncHandler(async (req, res) => {
   const userId = req.user?.userId;
-  const { name, email, phone, gender, occupation, dob, altPhone } = req.body;
+
+  const { name, email, gender, occupation, dob, altPhone } = req.body;
 
   if (!userId) {
     throw new ApiError(401, "Unauthorized");
   }
 
+  // Name validation
   if (name && name.trim().length < 2) {
     throw new ApiError(400, "Valid name required");
   }
 
-  const user = await User.findByIdAndUpdate(
-    userId,
-    { name, email, phone, gender, dob, occupation, altPhone },
-    { new: true },
-  ).select("-password");
+  // Alternate phone validation
+  if (altPhone && !/^[6-9]\d{9}$/.test(altPhone)) {
+    throw new ApiError(400, "Invalid alternate phone");
+  }
+
+  const updateData = {
+    name,
+    email,
+    gender,
+    occupation,
+    dob,
+    altPhone,
+  };
+
+  // remove undefined values
+  Object.keys(updateData).forEach((key) => {
+    if (updateData[key] === undefined) {
+      delete updateData[key];
+    }
+  });
+
+  const user = await User.findByIdAndUpdate(userId, updateData, {
+    new: true,
+    runValidators: true,
+  }).select("-password");
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -265,16 +315,17 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Profile updated successfully", user));
+    .json(new ApiResponse(200, user, "Profile updated successfully"));
 });
 
 // 🔁 Refresh Access Token
 export const refreshToken = asyncHandler(async (req, res) => {
   const token = req.cookies?.refreshToken || req.headers["x-refresh-token"];
-  console.log("Received refresh token:", token);
 
   if (!token) {
-    return res.status(401).json(new ApiResponse(401, "No active session"));
+    return res
+      .status(401)
+      .json(new ApiResponse(401, null, "No active session"));
   }
 
   let decoded;
@@ -298,25 +349,33 @@ export const refreshToken = asyncHandler(async (req, res) => {
   const newAccessToken = generateAccessToken(user);
 
   return res.status(200).json(
-    new ApiResponse(200, "Token refreshed", {
-      accessToken: newAccessToken,
-    }),
+    new ApiResponse(
+      200,
+      {
+        accessToken: newAccessToken,
+      },
+      "Token refreshed",
+    ),
   );
 });
 
-// 🚪 Logout (invalidate all tokens)
+// 🚪 Logout
 export const logout = asyncHandler(async (req, res) => {
   const userId = req.user?.userId;
-  // console.log("Logging out userId:", userId);
 
   if (!userId) {
     throw new ApiError(401, "Unauthorized");
   }
+
   await User.findByIdAndUpdate(userId, {
-    $inc: { tokenVersion: 1 },
+    $inc: {
+      tokenVersion: 1,
+    },
   });
 
   res.clearCookie("refreshToken", getCookieOptions());
-  console.log(`User ${userId} logged out, tokenVersion incremented`);
-  return res.status(200).json(new ApiResponse(200, "Logged out successfully"));
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Logged out successfully"));
 });
