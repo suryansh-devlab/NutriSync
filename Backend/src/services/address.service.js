@@ -34,7 +34,7 @@ export const createAddressService = async (userId, addressData) => {
   }
 
   // Address tag validation
-  const validTags = ["home", "office", "other"];
+  const validTags = ["home", "office", "parents_home", "other"];
 
   if (tag && !validTags.includes(tag)) {
     throw new ApiError(400, "Invalid address tag");
@@ -148,7 +148,7 @@ export const updateAddressService = async (userId, addressId, updateData) => {
   }
 
   // Address tag validation
-  const validTags = ["home", "office", "other"];
+  const validTags = ["home", "office", "parents_home", "other"];
 
   if (updateData.tag && !validTags.includes(updateData.tag)) {
     throw new ApiError(400, "Invalid address tag");

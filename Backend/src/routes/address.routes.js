@@ -23,7 +23,7 @@ router.get("/", verifyAccessToken, getAddresses);
 router.get("/:addressId", verifyAccessToken, getSingleAddress);
 
 // Update Address
-router.put("/:addressId", verifyAccessToken, updateAddress);
+router.patch("/:addressId", verifyAccessToken, updateAddress);
 
 // Delete Address
 router.delete("/:addressId", verifyAccessToken, deleteAddress);
